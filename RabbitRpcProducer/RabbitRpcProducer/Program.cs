@@ -1,11 +1,5 @@
-﻿using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Concurrent;
-using System.Text;
-using System.Threading;
+﻿using System;
 using System.Threading.Tasks;
-using RabbitRpcProducer;
 
 namespace RabbitRpcProducer
 {
@@ -14,21 +8,11 @@ namespace RabbitRpcProducer
         public static void Main(string[] args)
         {
             Console.WriteLine("RPC Client");
-            string n = args.Length > 0 ? args[0] : "30";
 
-            /*Task t = InvokeAsync(n);
+            /*Task t = InvokeAsync("30");
             t.Wait();*/
 
-            Task[] tasks =
-            {
-                InvokeAsync("50"),
-                InvokeAsync("10"),
-                InvokeAsync("25"),
-                InvokeAsync("75"),
-                InvokeAsync("100"),
-            };
-
-            //Task.WaitAll(tasks);
+            InvokeArrayOfFunctions();
 
             Console.WriteLine(" Press [enter] to exit.");
             Console.ReadLine();
@@ -36,12 +20,39 @@ namespace RabbitRpcProducer
 
         private static async Task InvokeAsync(string n)
         {
-            var rnd = new Random(Guid.NewGuid().GetHashCode());
             var rpcClient = new RpcClient();
 
             Console.WriteLine(" [x] Requesting fib({0})", n);
-            var response = await rpcClient.CallAsync(n.ToString());
+            var response = await rpcClient.CallAsync(n);
             Console.WriteLine($" [.] Was '{n}', Got '{response}'");
+
+            rpcClient.Close();
+        }
+
+        private static void InvokeArrayOfFunctions()
+        {
+            var rpcClient = new RpcClient();
+
+            Console.WriteLine(" [x] Requesting fib(50)");
+            var cont4 = rpcClient.CallAsync("50").ContinueWith(task => Console.WriteLine($" [.] Was '50', Got '{task.Result}'"));
+
+            Console.WriteLine(" [x] Requesting fib(10)");
+            var cont1 = rpcClient.CallAsync("10").ContinueWith(task => Console.WriteLine($" [.] Was '10', Got '{task.Result}'"));
+
+            Console.WriteLine(" [x] Requesting fib(25)");
+            var cont2 = rpcClient.CallAsync("25").ContinueWith(task => Console.WriteLine($" [.] Was '25', Got '{task.Result}'"));
+
+            Console.WriteLine(" [x] Requesting fib(75)");
+            var cont3 = rpcClient.CallAsync("75").ContinueWith(task => Console.WriteLine($" [.] Was '75', Got '{task.Result}'"));
+
+            Console.WriteLine(" [x] Requesting fib(100)");
+            var cont5 = rpcClient.CallAsync("100").ContinueWith(task => Console.WriteLine($" [.] Was '100', Got '{task.Result}'"));
+
+            cont1.Wait();
+            cont2.Wait();
+            cont3.Wait();
+            cont4.Wait();
+            cont5.Wait();
 
             rpcClient.Close();
         }
