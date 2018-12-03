@@ -10,6 +10,23 @@ using RabbitMQ.Client.Events;
 
 namespace RabbitRpcProducer
 {
+    /// <remarks>
+    /// Having received a response in that queue it's not clear to which request the response belongs.
+    /// That's when the CorrelationId property is used.
+    /// We're going to set it to a unique value for every request.
+    /// Later, when we receive a message in the callback queue we'll look at this property,
+    /// and based on that we'll be able to match a response with a request.
+    /// If we see an unknown CorrelationId value, we may safely discard the message -
+    /// it doesn't belong to our requests.
+    /// 
+    /// You may ask, why should we ignore unknown messages in the callback queue, rather than
+    /// failing with an error? It's due to a possibility of a race condition on the server side.
+    /// Although unlikely, it is possible that the RPC server will die just after sending us
+    /// the answer, but before sending an acknowledgment message for the request.
+    /// If that happens, the restarted RPC server will process the request again.
+    /// That's why on the client we must handle the duplicate responses gracefully,
+    /// and the RPC should ideally be idempotent.
+    /// </remarks>
     public class RpcClient
     {
         private const string QUEUE_NAME = "rpc_queue";
