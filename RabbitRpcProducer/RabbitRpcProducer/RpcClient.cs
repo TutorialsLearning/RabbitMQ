@@ -80,8 +80,10 @@ namespace RabbitRpcProducer
 
             cancellationToken.Register(() =>
             {
-                callbackMapper.TryRemove(correlationId, out var tmp);
-                tcs.SetCanceled(); // tcs == tmp
+                if (callbackMapper.TryRemove(correlationId, out var taskCompletionSource))
+                {
+                    taskCompletionSource.SetCanceled(); // taskCompletionSource == tcs
+                }
             });
             return tcs.Task;
         }
