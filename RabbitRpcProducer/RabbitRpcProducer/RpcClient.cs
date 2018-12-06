@@ -78,7 +78,11 @@ namespace RabbitRpcProducer
                 basicProperties: props,
                 body: messageBytes);
 
-            cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+            cancellationToken.Register(() =>
+            {
+                callbackMapper.TryRemove(correlationId, out var tmp);
+                tcs.SetCanceled(); // tcs == tmp
+            });
             return tcs.Task;
         }
 
