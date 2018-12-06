@@ -88,6 +88,27 @@ namespace RabbitRpcProducer
             return tcs.Task;
         }
 
+        /// <summary>
+        /// Обертка над CallAsync(...) для упрощенного синхронного вызова, с таймаутом отмены
+        /// </summary>
+        /// <param name="message">Сообщение, которое будет отправлено в очередь</param>
+        /// <param name="timeout">Таймаут по истечении которого задача будет отменена</param>
+        /// <returns>Ответ сервера или исключение, если завершено по таймауту</returns>
+        public string SendSingleMessage(string message, int timeout)
+        {
+            using (var tokenSource = new CancellationTokenSource())
+            {
+                CancellationToken token = tokenSource.Token;
+
+                tokenSource.CancelAfter(timeout);
+
+                var task = CallAsync(message, token);
+                task.Wait(token);
+
+                return task.Result;
+            }
+        }
+
         public void Close()
         {
             connection.Close();
