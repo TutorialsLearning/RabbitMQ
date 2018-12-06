@@ -27,7 +27,7 @@ namespace RabbitRpcProducer
     /// That's why on the client we must handle the duplicate responses gracefully,
     /// and the RPC should ideally be idempotent.
     /// </remarks>
-    public class RpcClient
+    public class RpcClient : IDisposable
     {
         private const string QUEUE_NAME = "rpc_queue";
 
@@ -60,6 +60,11 @@ namespace RabbitRpcProducer
                 consumer: consumer,
                 queue: replyQueueName,
                 noAck: true);
+        }
+
+        public void Dispose()
+        {
+            connection.Close();
         }
 
         public Task<string> CallAsync(string message, CancellationToken cancellationToken = default(CancellationToken))
@@ -107,11 +112,6 @@ namespace RabbitRpcProducer
 
                 return task.Result;
             }
-        }
-
-        public void Close()
-        {
-            connection.Close();
         }
     }
 }
