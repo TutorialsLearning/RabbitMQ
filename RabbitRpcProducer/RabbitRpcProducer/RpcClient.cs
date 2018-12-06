@@ -85,6 +85,7 @@ namespace RabbitRpcProducer
 
             cancellationToken.Register(() =>
             {
+                // Если задача уже выполнена, её не будет в _callbackMapper
                 if (callbackMapper.TryRemove(correlationId, out var taskCompletionSource))
                 {
                     taskCompletionSource.SetCanceled(); // taskCompletionSource == tcs
